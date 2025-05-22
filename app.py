@@ -6,21 +6,21 @@ from analysis import load_transcript, compute_sentiment, compute_filler_ratio
 import pandas as pd
 import matplotlib.pyplot as plt
 
-st.set_page_config(page_title="Transcript Analyzer", layout="wide")
-st.title("🎙️ Transcript Analyzer")
+st.set_page_config(page_title="Technical Assessment", layout="wide")
+st.title("🫵 COUNT ME IN")
 
 UPLOAD_DIR="upload"
 
 def render_dashboard(result_json: dict):
-    st.subheader("🧾 Line-by-Line Analysis")
+    st.subheader("Line-by-Line Analysis")
 
     view_mode = st.radio("Choose:", ["Original Text", "Highlighted filter words"], horizontal=True, label_visibility="collapsed")
 
     def sentiment_emoji(label):
         return {
-            "POSITIVE": "😊",
-            "NEGATIVE": "😠",
-            "NEUTRAL": "😐",
+            "POSITIVE": "🎈",
+            "NEGATIVE": "😞",
+            "NEUTRAL": "🫥",
             "UNKNOWN": "❓"
         }.get(label.upper(), "❓")
 
@@ -33,31 +33,31 @@ def render_dashboard(result_json: dict):
             return "🔴"
 
     # Header row
-    header_cols = st.columns([0.5, 0.7, 3, 1, 1.2])
+    header_cols = st.columns([0.5, 0.7, 3, 1.2, 1])
     headers = ["#", "Speaker", "Text", "Filler Ratio", "Sentiment"]
     for col, head in zip(header_cols, headers):
         col.markdown(f"**{head}**")
 
     # Data rows
     for i, turn in enumerate(result_json["dialogue"], start=1):
-        cols = st.columns([0.5, 0.7, 3, 1, 1.2])
+        cols = st.columns([0.5, 0.7, 3, 1.2, 1])
         cols[0].markdown(f"{i}")
         cols[1].markdown(f"Speaker {turn['speaker']}")
         cols[2].markdown(turn["text"] if view_mode == "Original Text" else turn["text_md"])
         cols[3].markdown(f"{filler_icon(turn['filler_ratio'])} {turn['filler_ratio']:.2f}")
         cols[4].markdown(f"{sentiment_emoji(turn['sentiment_label'])} {turn['sentiment_label']}")
 
-    # ---------------- Chart Section ----------------
+    # ---------------- Speaker Turn Metrics ----------------
     st.markdown("---")
-    st.subheader("📈 Speaker Turn Metrics")
+    st.subheader("Speaker Turn Metrics")
 
-    col1, col_spacer, col2 = st.columns([2, 3, 2])
+    col1, col_spacer, col2 = st.columns([3, 1, 3])
 
     with col1:
         chart_metric = st.radio("📊 Select Metric", ["Both", "Word Count", "Filler Ratio"], index=0, horizontal=True)
 
     with col2:
-        chart_speaker = st.radio("👤 Select Speaker View", ["Both", "A", "B"], index=0, horizontal=True)
+        chart_speaker = st.radio("👥 Select Speaker View", ["Both", "A", "B"], index=0, horizontal=True)
 
     chart_data = []
     for i, entry in enumerate(result_json["dialogue"], start=1):
@@ -129,7 +129,7 @@ def render_dashboard(result_json: dict):
     st.markdown("---")
 
     # ---------------- Sentiment Trend Chart ----------------
-    st.subheader("📉 Sentiment Score Trend")
+    st.subheader("Sentiment Trend")
 
     trend_view = st.radio("👥 Select Speaker for Trend", ["Both", "A", "B"], index=0, horizontal=True)
 
@@ -157,16 +157,14 @@ def render_dashboard(result_json: dict):
             plt.plot(subset["Line"], subset["Sentiment Score"], marker='o',
                     label=f"Speaker {trend_view}", color=speaker_colors[trend_view])
 
-        # 表情符号
         plt.text(df_trend["Line"].min() - 0.5, 1.05, "😊", fontsize=14)
         plt.text(df_trend["Line"].min() - 0.5, -1.1, "😠", fontsize=14)
 
-        # 视觉修饰
         plt.axhline(y=0, color='gray', linestyle='--', linewidth=1)
         plt.title("Sentiment Score per Turn")
         plt.xlabel("Line Number")
         plt.ylim(-1.2, 1.2)
-        plt.yticks([])  # 隐藏纵轴数字
+        plt.yticks([])
         plt.legend()
         st.pyplot(plt)
     else:
@@ -178,27 +176,28 @@ def render_dashboard(result_json: dict):
 st.sidebar.header("⚙️ Settings")
 
 # Custom Filler Words
-st.sidebar.markdown("### 📝 Custom Filler Words")
+st.sidebar.markdown("### Custom Filler Words")
 custom_fillers_input = st.sidebar.text_input(
-    "Comma-separated filler words",
+    "Comma-separated filler words:",
     value="um, like, you know"
 )
 filler_set = {w.strip().lower() for w in custom_fillers_input.split(",") if w.strip()}
 
-st.sidebar.markdown("### ✅ Active Filler Set")
-st.sidebar.write(", ".join(sorted(filler_set)) if filler_set else "_None_")
+filter_list = ", ".join(sorted(filler_set)) if filler_set else "_None_"
+st.sidebar.markdown(f"**Active Filler Set:** `{filter_list}`")
 
 st.sidebar.markdown("---")
 
 # File Upload
-st.sidebar.markdown("### 📤 Upload Transcript File")
+st.sidebar.markdown("### Upload Transcript File")
 uploaded_file = st.sidebar.file_uploader("Choose a .txt file", type=["txt"])
 
 
 # ---------------------- File Handling -----------------------
-filepath = "transcript.txt"  # Default fallback
+filepath = "transcript.txt"  # Default
 
 def is_directory_writable(path: str) -> bool:
+    """Check if a directory is writable."""
     try:
         test_file = os.path.join(path, ".write_test")
         with open(test_file, "w") as f:
@@ -232,17 +231,25 @@ if uploaded_file is not None:
         st.sidebar.error(f"❌ Failed to process uploaded file: {e}")
         st.stop()
 else:
-    st.sidebar.info("ℹ️ No file uploaded. Analyze default `transcript.txt`.")
+    st.sidebar.info("ℹ️ No file uploaded. Analyze default transcript file: `transcript.txt`.")
 
 # ---------------------- Load Transcript -----------------------
 with st.spinner("🔍 Loading transcript..."):
-    transcript = load_transcript(filepath)
-    if not transcript:
-        st.error("❌ Failed to load or parse the transcript. Please check format.")
+    try:
+        transcript = load_transcript(filepath)
+        if not transcript:
+            st.error("❌ Failed to load or parse the transcript. Please check the format or upload a different file.")
+            st.stop()
+    except Exception as ex:
+        st.error(f"❌ {ex}")
         st.stop()
+    # transcript = load_transcript(filepath)
+    # if not transcript:
+    #     st.error("❌ Failed to load or parse the transcript. Please check format.")
+    #     st.stop()
 
 # ---------------------- Analysis -----------------------
-with st.spinner("🧠 Running sentiment and filler analysis..."):
+with st.spinner("🤖 Running sentiment and filler analysis..."):
     enriched_data = []
     total_sentiment = 0.0
     total_filler = 0.0
@@ -281,6 +288,7 @@ st.success("✅ Analysis complete!")
 
 # ---------------------- Debug button -----------------------
 with st.expander("🐞 Show JSON", expanded=False):
+    """Optionally show the result JSON for debugging."""
     st.code(json_result, language="json")
 
 
