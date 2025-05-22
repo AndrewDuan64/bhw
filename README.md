@@ -9,7 +9,7 @@ This project is a self-contained Python application for analyzing everyday dialo
 - Interactive report dashboard built with Streamlit.
 - Optional creative metrics (e.g., speaker word count trend).
 
-Live preview: http://3.107.93.116:8501/
+Live preview: http://3.107.175.232:8501/ 
 
 
 ## Project Structure
@@ -42,8 +42,6 @@ Live preview: http://3.107.93.116:8501/
 ![overview](docs/p2.png "overview")
 
 
-
-
 ## Quick Start
 
 ### Local Installation
@@ -65,11 +63,11 @@ docker run -p 8501:8501 bhw
 
 ```
 
-### Deploying on AWS EC2 (t2.micro, Ubuntu, 30G)
+### Deploying on AWS EC2 (t2.micro, Ubuntu24.04, 30G storage)
 
 - The t2.micro instance type is eligible for AWS Free Tier. Using AWS Free Tier resources does not violate any challenge rules, as no paid or proprietary services are required for this project.
 - The first time you run the application, model downloads may take a few minutes. All instructions are based on free, open-source tooling.
-- This demo is running on t2.micro: http://3.107.93.116:8501/
+- This demo is running on t2.micro: http://3.107.175.232:8501/ 
 
 ```bash
 # This program requires more memory than provided by default on t2.micro. Creating a 4GB swap file is essential to successfully load language models and run analyses without errors.
